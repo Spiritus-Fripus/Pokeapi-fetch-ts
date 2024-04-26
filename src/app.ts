@@ -3,7 +3,7 @@ async function fetchPokemon(): Promise<void> {
 
   try {
     const response: Response = await fetch(
-      "https://pokeapi.co/api/v2/pokemon?limit=251&offset=0",
+      "https://pokeapi.co/api/v2/pokemon?limit=251&offset=0"
     );
 
     if (!response.ok) {
@@ -44,7 +44,7 @@ async function renderPokemonList(list: Pokemon[]): Promise<void> {
   }
 
   list
-    .sort((a, b) => (a.id < b.id ? -1 : 1))
+    .sort((a, b) => a.id - b.id)
     .forEach((pokemon) => {
       const template = renderPokemon(pokemon);
       listElement.innerHTML += template;

@@ -48,7 +48,7 @@ function renderPokemonList(list) {
             throw new Error("Could not find parentList element");
         }
         list
-            .sort((a, b) => (a.id < b.id ? -1 : 1))
+            .sort((a, b) => a.id - b.id)
             .forEach((pokemon) => {
             const template = renderPokemon(pokemon);
             listElement.innerHTML += template;
@@ -61,7 +61,7 @@ function renderPokemon(pokemon) {
       <li>name: ${pokemon.name}</li>
       <ul>
         <li>id: ${pokemon.id}</li>
-        <img src="${pokemon.sprites.other.showdown.front_default}">
+        <img src="${pokemon.sprites.other.showdown.front_default}" alt ="pokemon-img">
        </ul>
     </ul>
     `;
