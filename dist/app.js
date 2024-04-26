@@ -8,56 +8,62 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-fetchPokemon();
 function fetchPokemon() {
     return __awaiter(this, void 0, void 0, function* () {
+        const list = [];
         try {
             const response = yield fetch("https://pokeapi.co/api/v2/pokemon?limit=251&offset=0");
             if (!response.ok) {
                 throw new Error("Could not find pokemon data from fetchPokemon");
             }
             const data = yield response.json();
-            data.results.forEach((pokemon) => {
-                fetchPokemonData(pokemon);
-            });
+            yield Promise.all(data.results.map((p) => fetchPokemonData(p, list)));
+            yield renderPokemonList(list);
         }
         catch (error) {
             console.log(error);
         }
     });
 }
-function fetchPokemonData(pokemonData) {
+function fetchPokemonData(pokemonData, list) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const results = pokemonData;
-            const url = results.url;
-            const response = yield fetch(url);
+            const response = yield fetch(results.url);
             if (!response.ok) {
                 throw new Error("Could not fetch pokemon data from fetchPokemonData ");
             }
-            const data = yield response.json();
-            yield renderPokemonList(data);
+            const data = (yield response.json());
+            list.push(data);
         }
         catch (error) {
             console.log(error);
         }
     });
 }
-function renderPokemonList(pokemonData) {
+function renderPokemonList(list) {
     return __awaiter(this, void 0, void 0, function* () {
-        const parentList = document.getElementById("divList");
-        const firstUl = document.createElement("ul");
-        const secondUl = document.createElement("ul");
-        const pokemonName = document.createElement("li");
-        const pokemonId = document.createElement("li");
-        const pokemonImg = document.createElement("img");
-        pokemonName.innerText = pokemonData.name + " : ";
-        pokemonId.innerText = "id : " + pokemonData.id;
-        pokemonImg.src = pokemonData.sprites.other.showdown.front_default;
-        parentList === null || parentList === void 0 ? void 0 : parentList.appendChild(firstUl);
-        firstUl === null || firstUl === void 0 ? void 0 : firstUl.appendChild(pokemonName);
-        firstUl === null || firstUl === void 0 ? void 0 : firstUl.appendChild(secondUl);
-        secondUl === null || secondUl === void 0 ? void 0 : secondUl.appendChild(pokemonId);
-        firstUl === null || firstUl === void 0 ? void 0 : firstUl.appendChild(pokemonImg);
+        const listElement = document.getElementById("divList");
+        if (!listElement) {
+            throw new Error("Could not find parentList element");
+        }
+        list
+            .sort((a, b) => (a.id < b.id ? -1 : 1))
+            .forEach((pokemon) => {
+            const template = renderPokemon(pokemon);
+            listElement.innerHTML += template;
+        });
     });
 }
+function renderPokemon(pokemon) {
+    return `
+    <ul>
+      <li>name: ${pokemon.name}</li>
+      <ul>
+        <li>id: ${pokemon.id}</li>
+        <img src="${pokemon.sprites.other.showdown.front_default}">
+       </ul>
+    </ul>
+    `;
+}
+fetchPokemon();

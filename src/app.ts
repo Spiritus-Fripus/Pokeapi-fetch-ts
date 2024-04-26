@@ -1,56 +1,66 @@
-fetchPokemon();
+async function fetchPokemon(): Promise<void> {
+  const list: Pokemon[] = [];
 
-async function fetchPokemon() {
   try {
     const response: Response = await fetch(
-      "https://pokeapi.co/api/v2/pokemon?limit=251&offset=0"
+      "https://pokeapi.co/api/v2/pokemon?limit=251&offset=0",
     );
+
     if (!response.ok) {
       throw new Error("Could not find pokemon data from fetchPokemon");
     }
-    const data: {results : PokemonList[]} = await response.json();
 
-    data.results.forEach((pokemon :PokemonList)=> {
-      fetchPokemonData(pokemon);
-    });
+    const data: { results: PokemonList[] } = await response.json();
+
+    await Promise.all(data.results.map((p) => fetchPokemonData(p, list)));
+
+    await renderPokemonList(list);
   } catch (error) {
     console.log(error);
   }
 }
 
-async function fetchPokemonData(pokemonData: PokemonList) {
+async function fetchPokemonData(pokemonData: PokemonList, list: Pokemon[]) {
   try {
-    const results = (pokemonData as unknown as PokemonResults);
-    const url : string= results.url;
-
-    const response: Response = await fetch(url);
+    const results = pokemonData as unknown as PokemonResults;
+    const response: Response = await fetch(results.url);
 
     if (!response.ok) {
       throw new Error("Could not fetch pokemon data from fetchPokemonData ");
     }
-    const data: Pokemon= await response.json();
 
-    await renderPokemonList(data);
+    const data = (await response.json()) as Pokemon;
+    list.push(data);
   } catch (error) {
     console.log(error);
   }
 }
 
-async function renderPokemonList(pokemonData: Pokemon ) {
-  const parentList: HTMLElement | null = document.getElementById("divList");
-  const firstUl: HTMLElement | null = document.createElement("ul");
-  const secondUl: HTMLElement | null = document.createElement("ul");
-  const pokemonName: HTMLElement | null = document.createElement("li");
-  const pokemonId: HTMLElement | null   = document.createElement("li");
-  const pokemonImg: HTMLImageElement | null = document.createElement("img");
+async function renderPokemonList(list: Pokemon[]): Promise<void> {
+  const listElement = document.getElementById("divList");
 
-  pokemonName.innerText = pokemonData.name + " : ";
-  pokemonId.innerText = "id : " + pokemonData.id;
-  pokemonImg.src = pokemonData.sprites.other.showdown.front_default;
+  if (!listElement) {
+    throw new Error("Could not find parentList element");
+  }
 
-  parentList?.appendChild(firstUl);
-  firstUl?.appendChild(pokemonName);
-  firstUl?.appendChild(secondUl);
-  secondUl?.appendChild(pokemonId);
-  firstUl?.appendChild(pokemonImg);
+  list
+    .sort((a, b) => (a.id < b.id ? -1 : 1))
+    .forEach((pokemon) => {
+      const template = renderPokemon(pokemon);
+      listElement.innerHTML += template;
+    });
 }
+
+function renderPokemon(pokemon: Pokemon): string {
+  return `
+    <ul>
+      <li>name: ${pokemon.name}</li>
+      <ul>
+        <li>id: ${pokemon.id}</li>
+        <img src="${pokemon.sprites.other.showdown.front_default}" alt ="pokemon-img">
+       </ul>
+    </ul>
+    `;
+}
+
+fetchPokemon();
